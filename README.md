@@ -22,9 +22,9 @@ npm install interpolate-params --save
 Then, in your app:
 
 ```js
-var interpolateParams = require('interpolate-params'). interpolateParams;
+var interpolateParams = require('interpolate-params').interpolateParams;
 // or
-var interpolateParamsInFirstMatch = require('interpolate-params'). interpolateParamsInFirstMatch;
+var interpolateParamsInFirstMatch = require('interpolate-params').interpolateParamsInFirstMatch;
 ```
 
 ## API
