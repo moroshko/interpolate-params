@@ -3,6 +3,20 @@ var interpolateParams = require('../lib/interpolateParams');
 
 var testCases = [
   {
+    should: 'throw an Error if pattern is not a string',
+    pattern: [':eyesCount-eyes'],
+    params: {
+      eyesCount: '8'
+    },
+    throw: '\'pattern\' must be a string'
+  },
+  {
+    should: 'throw an Error if params is not an object',
+    pattern: ':eyesCount-eyes',
+    params: 'something',
+    throw: '\'params\' must be an object'
+  },
+  {
     should: 'throw an Error if indexFn is not a function',
     pattern: ':eyesCount-eyes',
     params: {
