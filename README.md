@@ -29,15 +29,17 @@ var interpolateParamsInFirstMatch = require('interpolate-params').interpolatePar
 
 ## API
 
-* [`interpolateParams(pattern, params, indexFn)`](#interpolateParams)
-* [`interpolateParamsInFirstMatch(patterns, params, indexFn)`](#interpolateParamsInFirstMatch)
+* [`interpolateParams(pattern, params, [map])`](#interpolateParams)
+* [`interpolateParamsInFirstMatch(patterns, params)`](#interpolateParamsInFirstMatch)
 
 <a name="interpolateParams"></a>
-### interpolateParams(pattern, params, indexFn)
+### interpolateParams(pattern, params, [map])
 
-Interpolates `params` in the given parameterized `pattern`, using an optional `indexFn`.
+Interpolates `params` in the given parameterized `pattern`, using an optional `map` function (see its uses in the examples below).
 
-If all `pattern` parameters appear in `params`, the interpolation is considered successful, and the interpolated pattern along with the remaining params are returned. Otherwise, `null` is returned.
+If all `pattern` parameters appear in `params`, and `map` doesn't return `null`, the interpolation is considered successful. In this case, the interpolated pattern is returned along with the remaining params. 
+
+Otherwise, `interpolateParams` returns `null`.
 
 `pattern` parameters must be in the following format: `:camelCase`
 
@@ -74,16 +76,16 @@ var result = interpolateParams(
     userId: '456',
     mood: 'Awesome'
   },
-  indexFn: function(param, value) {
+  map: function(param, value) {
     switch (param) {
       case 'userId':
-        return value === '456' ? 'Misha' : '';
+        return value === '456' ? 'Misha' : null;
 
       case 'friendId':
-        return value === '123' ? 'David' : '';
+        return value === '123' ? 'David' : null;
 
       default:
-        return '';
+        return null;
     }
   }
 );
@@ -105,6 +107,38 @@ var result = interpolateParams(
 var result = interpolateParams(
   '/users/:userId/friends/:friendId/photo',
   {
+    friendId: '999',
+    userId: '456',
+    mood: 'Awesome'
+  },
+  map: function(param, value) {
+    switch (param) {
+      case 'userId':
+        return value === '456' ? 'Misha' : null;
+
+      case 'friendId':
+        return value === '123' ? 'David' : null;
+
+      default:
+        return null;
+    }
+  }
+);
+
+/* 
+  Returns:
+    null
+    
+  because map('friendId', '999') === null
+*/
+```
+
+#### Example 4
+
+```js
+var result = interpolateParams(
+  '/users/:userId/friends/:friendId/photo',
+  {
     friendId: '123',
     mood: 'Awesome'
   }
@@ -119,23 +153,37 @@ var result = interpolateParams(
 ```
 
 <a name="interpolateParamsInFirstMatch"></a>
-### interpolateParamsInFirstMatch(patterns, params, indexFn)
+### interpolateParamsInFirstMatch(patterns, params)
 
-Interpolates `params` in one of the parameterized `patterns`, using an optional `indexFn`. If none of the `patterns` match, `interpolateParamsInFirstMatch` returns `null`. Otherwise, it returns the first successful interpolation.
+Interpolates `params` in one of the parameterized `patterns`. Every pattern can have and optional `map` function. If none of the `patterns` match, `interpolateParamsInFirstMatch` returns `null`. Otherwise, it returns the first successful interpolation.
 
 #### Example 1
 
 ```js
+function paramsMap(param, value) {
+  switch (param) {
+    case 'userId':
+      return value === '456' ? 'Misha' : null;
+
+    case 'friendId':
+      return value === '123' ? 'David' : null;
+
+    default:
+      return null;
+  }
+}
+  
 var result = interpolateParamsInFirstMatch(
   [
-    '/users/:userId/friends/:friendId/photo',
-    '/users/:userId/friends/:friendId',
-    '/users/:userId/friends',
-    '/users/:userId',
-    '/users'
+    { pattern: '/users/:userId/friends/:friendId/photo', map: paramsMap },
+    { pattern: '/users/:userId/friends/:friendId' },
+    { pattern: '/users/:userId/friends' },
+    { pattern: '/users/:userId' },
+    { pattern: '/users' }
   ],
   {
     userId: '456',
+    friendId: '999',
     mood: 'Awesome'
   }
 );
@@ -143,11 +191,13 @@ var result = interpolateParamsInFirstMatch(
 /* 
   Returns:
     {
-      interpolatedPattern: '/users/456/friends',
+      interpolatedPattern: '/users/456/friends/999',
       remainingParams: {
         mood: 'Awesome'
       }
     }
+    
+  because the first pattern requires friendId === '123'
 */
 ```
 
@@ -156,11 +206,11 @@ var result = interpolateParamsInFirstMatch(
 ```js
 var result = interpolateParamsInFirstMatch(
   [
-    '/users/:userId/friends/:friendId/photo',
-    '/users/:userId/friends/:friendId',
-    '/users/:userId/friends',
-    '/users/:userId',
-    '/users'
+    { pattern: '/users/:userId/friends/:friendId/photo' },
+    { pattern: '/users/:userId/friends/:friendId' },
+    { pattern: '/users/:userId/friends' },
+    { pattern: '/users/:userId' },
+    { pattern: '/users' }
   ],
   {
     friendId: '123',
@@ -177,6 +227,8 @@ var result = interpolateParamsInFirstMatch(
         mood: 'Awesome'
       }
     }
+    
+  because every other pattern requires `userId` to be in params.
 */
 ```
 
@@ -185,10 +237,10 @@ var result = interpolateParamsInFirstMatch(
 ```js
 var result = interpolateParamsInFirstMatch(
   [
-    '/users/:userId/friends/:friendId/photo',
-    '/users/:userId/friends/:friendId',
-    '/users/:userId/friends',
-    '/users/:userId'
+    { pattern: '/users/:userId/friends/:friendId/photo' },
+    { pattern: '/users/:userId/friends/:friendId' },
+    { pattern: '/users/:userId/friends' },
+    { pattern: '/users/:userId' }
   ],
   {
     friendId: '123'
@@ -199,7 +251,7 @@ var result = interpolateParamsInFirstMatch(
   Returns:
     null
     
-  because none of the `patterns` match.
+  because all the patterns require `userId` to be in params.
 */
 ```
 

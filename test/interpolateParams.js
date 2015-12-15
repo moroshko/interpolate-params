@@ -1,6 +1,22 @@
 var expect = require('chai').expect;
 var interpolateParams = require('../lib/interpolateParams');
 
+function map(param, value) {
+  switch (param) {
+    case 'eyesCount':
+      return value === '8' ? 'eight' : null;
+
+    case 'legsCount':
+      return value === '2' ? 'TWO' : null;
+
+    case 'animal':
+      return value === 'Dog' ? 'doggy' : null;
+
+    default:
+      return null;
+  }
+}
+
 var testCases = [
   {
     should: 'throw an Error if pattern is not a string',
@@ -17,15 +33,15 @@ var testCases = [
     throw: '\'params\' must be an object'
   },
   {
-    should: 'throw an Error if indexFn is not a function',
+    should: 'throw an Error if map is not a function',
     pattern: ':eyesCount-eyes',
     params: {
       eyesCount: '8'
     },
-    indexFn: {
+    map: {
       8: 'eight'
     },
-    throw: '\'indexFn\' must be a function'
+    throw: '\'map\' must be a function'
   },
   {
     should: 'return null if there is no match',
@@ -79,7 +95,7 @@ var testCases = [
     }
   },
   {
-    should: 'interpolate using indexFn',
+    should: 'interpolate using map',
     pattern: ':animal/has/:legsCount-legs/and/:eyesCount-eyes',
     params: {
       eyesCount: '8',
@@ -87,34 +103,32 @@ var testCases = [
       legsCount: '2',
       mood: 'awesome'
     },
-    indexFn: function(param, value) {
-      switch (param) {
-        case 'eyesCount':
-          return value === '8' ? 'eight' : '';
-
-        case 'legsCount':
-          return value === '2' ? 'TWO' : '';
-
-        case 'animal':
-          return value === 'Dog' ? 'doggy' : '';
-
-        default:
-          return '';
-      }
-    },
+    map: map,
     result: {
       interpolatedPattern: 'doggy/has/TWO-legs/and/eight-eyes',
       remainingParams: {
         mood: 'awesome'
       }
     }
+  },
+  {
+    should: 'not interpolate if map returns null',
+    pattern: ':animal/has/:legsCount-legs/and/:eyesCount-eyes',
+    params: {
+      eyesCount: '999',
+      animal: 'Dog',
+      legsCount: '2',
+      mood: 'awesome'
+    },
+    map: map,
+    result: null
   }
 ];
 
 describe('interpolateParams should', function() {
   testCases.forEach(function(testCase) {
     it(testCase.should, function() {
-      var fn = interpolateParams.bind(null, testCase.pattern, testCase.params, testCase.indexFn);
+      var fn = interpolateParams.bind(null, testCase.pattern, testCase.params, testCase.map);
 
       if (testCase.throw) {
         expect(fn).to.throw(testCase.throw);

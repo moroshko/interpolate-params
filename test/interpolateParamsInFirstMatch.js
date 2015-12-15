@@ -1,6 +1,16 @@
 var expect = require('chai').expect;
 var interpolateParamsInFirstMatch = require('../lib/interpolateParamsInFirstMatch');
 
+function map(param, value) {
+  switch (param) {
+    case 'language':
+      return value[0] === 'E' ? value.toUpperCase() : null;
+
+    default:
+      return value;
+  }
+}
+
 var testCases = [
   {
     should: 'return null if no patterns provided',
@@ -13,9 +23,9 @@ var testCases = [
   {
     should: 'return null if none of the patterns match',
     patterns: [
-      '/:when/:language/is/:description',
-      '/:language/is/:description',
-      '/:language'
+      { pattern: '/:when/:language/is/:description' },
+      { pattern: '/:language/is/:description' },
+      { pattern: '/:language' }
     ],
     params: {
       when: 'today',
@@ -24,24 +34,41 @@ var testCases = [
     result: null
   },
   {
-    should: 'return the first match',
+    should: 'interpolate the first match',
     patterns: [
-      '/:when/:language/is/:description',
-      '/:language/is/:description',
-      '/:language'
+      { pattern: '/:when/:language/is/:description' },
+      { pattern: '/:language/is/:description', map: map },
+      { pattern: '/:language' }
     ],
     params: {
       year: '2015',
       description: 'awesome',
       language: 'Elm'
     },
-    indexFn: function(param, value) {
-      return value.toUpperCase();
-    },
     result: {
-      interpolatedPattern: '/ELM/is/AWESOME',
+      interpolatedPattern: '/ELM/is/awesome',
       remainingParams: {
         year: '2015'
+      }
+    }
+  },
+  {
+    should: 'not interpolate if map returns null',
+    patterns: [
+      { pattern: '/:when/:language/is/:description' },
+      { pattern: '/:language/is/:description', map: map },
+      { pattern: '/:language' }
+    ],
+    params: {
+      year: '2015',
+      description: 'awesome',
+      language: 'Javascript'
+    },
+    result: {
+      interpolatedPattern: '/Javascript',
+      remainingParams: {
+        year: '2015',
+        description: 'awesome'
       }
     }
   }
@@ -50,7 +77,7 @@ var testCases = [
 describe('interpolateParamsInFirstMatch should', function() {
   testCases.forEach(function(testCase) {
     it(testCase.should, function() {
-      expect(interpolateParamsInFirstMatch(testCase.patterns, testCase.params, testCase.indexFn)).to.deep.equal(testCase.result);
+      expect(interpolateParamsInFirstMatch(testCase.patterns, testCase.params)).to.deep.equal(testCase.result);
     });
   });
 });
