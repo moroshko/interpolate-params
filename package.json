@@ -1,6 +1,6 @@
 {
   "name": "interpolate-params",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "description": "Interpolate parameters in a string pattern",
   "main": "index.js",
   "scripts": {
