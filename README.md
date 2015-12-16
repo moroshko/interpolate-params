@@ -41,7 +41,7 @@ If all `pattern` parameters appear in `params`, and `map` doesn't return `null`,
 
 Otherwise, `interpolateParams` returns `null`.
 
-`pattern` parameters must be in the following format: `:camelCase`
+`pattern` parameters must have letters only.
 
 #### Example 1
 
@@ -76,7 +76,7 @@ var result = interpolateParams(
     userId: '456',
     mood: 'Awesome'
   },
-  map: function(param, value) {
+  function(param, value) {
     switch (param) {
       case 'userId':
         return value === '456' ? 'Misha' : null;
@@ -111,7 +111,7 @@ var result = interpolateParams(
     userId: '456',
     mood: 'Awesome'
   },
-  map: function(param, value) {
+  function(param, value) {
     switch (param) {
       case 'userId':
         return value === '456' ? 'Misha' : null;
@@ -129,7 +129,7 @@ var result = interpolateParams(
   Returns:
     null
     
-  because map('friendId', '999') === null
+  because friendId !== '123'
 */
 ```
 
